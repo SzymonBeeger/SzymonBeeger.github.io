@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shortcuts Setup</title>
+</head>
+<body>
+
+    <h1>Shortcuts Setup</h1>
+
+    <p>Click below to download shortcuts.</p>
+
+    <button onclick="downloadAll()">Download all shortcuts</button>
+
+    <script>
+    function downloadAll() {
+        const files = [
+            "shortcuts/GitHub.lnk",
+            "shortcuts/Moodle.url",
+        ];
+    
+        files.forEach(file => {
+            const link = document.createElement("a");
+            link.href = file;
+            link.download = "";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+    </script>
+
+</body>
+</html>
