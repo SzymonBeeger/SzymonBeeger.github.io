@@ -54,26 +54,24 @@
 
         <h1>Shortcuts Setup</h1>
 
-        <p>Open university websites.</p>
+        <p>Download your university shortcuts.</p>
 
-        <button onclick="openAll()">
-            Open All
+        <button onclick="downloadShortcuts()">
+            Download Shortcuts
         </button>
 
     </div>
 
     <script>
-        function openAll() {
+        function downloadShortcuts() {
+            const link = document.createElement("a");
 
-            const websites = [
-                "https://github.com/SzymonBeeger/SzymonBeeger.github.io/raw/refs/heads/main/shortcuts/Moodle.url",
-                "https://github.com/SzymonBeeger/SzymonBeeger.github.io/raw/refs/heads/main/shortcuts/Outlook.url",
-                "https://github.com/SzymonBeeger/SzymonBeeger.github.io/raw/refs/heads/main/shortcuts/GitHub%20Deployment.lnk"
-            ];
+            link.href = "shortcuts.zip";
+            link.download = "shortcuts.zip";
 
-            websites.forEach(url => {
-                window.open(url, "_blank");
-            });
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 
