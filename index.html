@@ -3,6 +3,7 @@
 <head>
     <title>Shortcuts Setup</title>
 </head>
+
 <body>
 
     <h1>Shortcuts Setup</h1>
@@ -12,22 +13,24 @@
     <button onclick="downloadAll()">Download all shortcuts</button>
 
     <script>
-    function downloadAll() {
-        const files = [
-            "shortcuts/GitHub Deployment.lnk",
-            "shortcuts/Moodle.url",
-            "shortcuts/Outlook.url",
-        ];
-    
-        files.forEach(file => {
-            const link = document.createElement("a");
-            link.href = file;
-            link.download = "";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    }
+        function downloadAll() {
+            const files = [
+                "shortcuts/GitHub%20Deployment.lnk",
+                "shortcuts/Moodle.url",
+                "shortcuts/Outlook.url"
+            ];
+
+            files.forEach((file, index) => {
+                setTimeout(() => {
+                    const link = document.createElement("a");
+                    link.href = file;
+                    link.download = file.split("/").pop();
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, index * 1000);
+            });
+        }
     </script>
 
 </body>
