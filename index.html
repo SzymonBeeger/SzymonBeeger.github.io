@@ -1,18 +1,127 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Shortcuts Setup</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 80px auto;
+            padding: 20px;
+            text-align: center;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #555;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            background: #24292f;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        #status {
+            margin-top: 20px;
+            color: #555;
+        }
+    </style>
 </head>
 
 <body>
 
-    <h1>Shortcuts Setup</h1>
+    <div class="container">
 
-    <p>Click below to download your shortcuts.</p>
+        <h1>Shortcuts Setup</h1>
 
-    <a href="Shortcuts.zip" download>
-        <button>Download all shortcuts</button>
-    </a>
+        <p>
+            Download my university shortcuts.
+        </p>
+
+        <button onclick="downloadAll()">
+            Download All Shortcuts
+        </button>
+
+        <p id="status"></p>
+
+    </div>
+
+    <script>
+        function downloadFile(url, filename) {
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = filename;
+            link.target = "_blank";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadAll() {
+
+            const files = [
+                {
+                    url: "https://raw.githubusercontent.com/SzymonBeeger/SzymonBeeger.github.io/main/shortcuts/GitHub%20Deployment.lnk",
+                    name: "GitHub Deployment.lnk"
+                },
+                {
+                    url: "https://raw.githubusercontent.com/SzymonBeeger/SzymonBeeger.github.io/main/shortcuts/Moodle.url",
+                    name: "Moodle.url"
+                },
+                {
+                    url: "https://raw.githubusercontent.com/SzymonBeeger/SzymonBeeger.github.io/main/shortcuts/Outlook.url",
+                    name: "Outlook.url"
+                }
+            ];
+
+            document.getElementById("status").textContent =
+                "Starting downloads...";
+
+            files.forEach((file, index) => {
+
+                setTimeout(() => {
+
+                    downloadFile(file.url, file.name);
+
+                    if (index === files.length - 1) {
+                        document.getElementById("status").textContent =
+                            "Downloads started.";
+                    }
+
+                }, index * 1500);
+
+            });
+        }
+    </script>
 
 </body>
 </html>
+```
