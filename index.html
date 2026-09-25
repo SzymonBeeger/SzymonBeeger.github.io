@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,11 +46,6 @@
         button:hover {
             background: #444;
         }
-
-        #status {
-            margin-top: 20px;
-            color: #555;
-        }
     </style>
 </head>
 
@@ -59,67 +55,29 @@
 
         <h1>Shortcuts Setup</h1>
 
-        <p>
-            Download my university shortcuts.
-        </p>
+        <p>Open university websites.</p>
 
-        <button onclick="downloadAll()">
-            Download All Shortcuts
+        <button onclick="openAll()">
+            Open All
         </button>
-
-        <p id="status"></p>
 
     </div>
 
     <script>
-        function downloadFile(url, filename) {
-            const link = document.createElement("a");
+        function openAll() {
 
-            link.href = url;
-            link.download = filename;
-            link.target = "_blank";
-
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function downloadAll() {
-
-            const files = [
-                {
-                    url: "https://raw.githubusercontent.com/SzymonBeeger/SzymonBeeger.github.io/main/shortcuts/GitHub%20Deployment.lnk",
-                    name: "GitHub Deployment.lnk"
-                },
-                {
-                    url: "https://raw.githubusercontent.com/SzymonBeeger/SzymonBeeger.github.io/main/shortcuts/Moodle.url",
-                    name: "Moodle.url"
-                },
-                {
-                    url: "https://raw.githubusercontent.com/SzymonBeeger/SzymonBeeger.github.io/main/shortcuts/Outlook.url",
-                    name: "Outlook.url"
-                }
+            const websites = [
+                "https://YOUR-MOODLE-URL-HERE",
+                "https://outlook.office.com/",
+                "https://github.com/"
             ];
 
-            document.getElementById("status").textContent =
-                "Starting downloads...";
-
-            files.forEach((file, index) => {
-
-                setTimeout(() => {
-
-                    downloadFile(file.url, file.name);
-
-                    if (index === files.length - 1) {
-                        document.getElementById("status").textContent =
-                            "Downloads started.";
-                    }
-
-                }, index * 1500);
-
+            websites.forEach(url => {
+                window.open(url, "_blank");
             });
         }
     </script>
 
 </body>
 </html>
+```
