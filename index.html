@@ -71,14 +71,14 @@
 
         <h1>Shortcuts Setup</h1>
 
-        <p>Download your university shortcuts to a folder on your computer.</p>
+        <p>Download your university shortcuts individually.</p>
 
         <button id="download-button" type="button">
             Download all shortcuts
         </button>
 
         <p id="status" role="status" aria-live="polite"></p>
-        <p class="hint">On Chrome or Edge, you can choose the destination folder. Other browsers may ask you to allow multiple downloads.</p>
+        <p class="hint">The files will use your browser's normal download location. To save them to Desktop, enable “Ask where to save each file” in your browser's download settings.</p>
 
     </div>
 
@@ -94,46 +94,13 @@
 
         button.addEventListener("click", downloadShortcuts);
 
-        async function downloadShortcuts() {
+        function downloadShortcuts() {
             button.disabled = true;
-            status.textContent = "Choose a folder for the shortcuts...";
+            status.textContent = "Starting the downloads...";
 
-            try {
-                // This produces real files directly in a chosen folder and avoids
-                // the browser's temporary .download/.crdownload filenames.
-                if ("showDirectoryPicker" in window) {
-                    const directory = await window.showDirectoryPicker({ mode: "readwrite" });
-
-                    for (const shortcut of shortcuts) {
-                        const response = await fetch(shortcut.path, { cache: "no-store" });
-                        if (!response.ok) {
-                            throw new Error(`Could not download ${shortcut.name}`);
-                        }
-
-                        const file = await directory.getFileHandle(shortcut.name, { create: true });
-                        const writable = await file.createWritable();
-                        await writable.write(await response.blob());
-                        await writable.close();
-                    }
-
-                    status.textContent = "All shortcuts were saved successfully.";
-                    return;
-                }
-            } catch (error) {
-                if (error.name === "AbortError") {
-                    status.textContent = "Download cancelled.";
-                    return;
-                }
-
-                // Use the normal browser download flow if the folder picker is
-                // unavailable or a file could not be written there.
-                status.textContent = "Starting the downloads...";
-            } finally {
-                button.disabled = false;
-            }
-
-            // The download attribute supplies the correct extension and filename.
-            // The small delay gives browsers time to register each download.
+            // Use the browser's normal download flow. This avoids requesting
+            // access to Desktop/Downloads, which some browsers classify as
+            // protected system folders.
             for (const shortcut of shortcuts) {
                 const link = document.createElement("a");
                 link.href = shortcut.path;
@@ -142,10 +109,10 @@
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-                await new Promise(resolve => setTimeout(resolve, 250));
             }
 
             status.textContent = "Downloads started. If prompted, allow multiple downloads for this site.";
+            setTimeout(() => { button.disabled = false; }, 1000);
         }
     </script>
 
