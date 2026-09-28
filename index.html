@@ -102,19 +102,25 @@
                 // Turn each same-origin file into a blob URL. This removes the
                 // server's suggested filename and lets the download attribute
                 // control the final name and extension.
-                const files = await Promise.all(shortcuts.map(async shortcut => {
+                const files = [];
+
+                // Prepare and start each download separately. Some browsers
+                // leave their temporary `.download` file behind when several
+                // downloads are started at exactly the same time.
+                for (const shortcut of shortcuts) {
                     const response = await fetch(shortcut.path, { cache: "no-store" });
                     if (!response.ok) {
                         throw new Error(`Could not download ${shortcut.name}`);
                     }
 
-                    return {
+                    files.push({
                         name: shortcut.name,
                         blob: new Blob([await response.arrayBuffer()], { type: "application/octet-stream" })
-                    };
-                }));
+                    });
+                }
 
-                for (const file of files) {
+                for (const [index, file] of files.entries()) {
+                    status.textContent = `Starting download ${index + 1} of ${files.length}...`;
                     const objectUrl = URL.createObjectURL(file.blob);
                     const link = document.createElement("a");
                     link.href = objectUrl;
@@ -126,6 +132,10 @@
 
                     // Keep the object URL alive while the browser starts the download.
                     setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+
+                    // Give the browser time to finish this download before
+                    // starting the next one.
+                    await new Promise(resolve => setTimeout(resolve, 1500));
                 }
 
                 status.textContent = "Downloads started. If prompted, allow multiple downloads for this site.";
