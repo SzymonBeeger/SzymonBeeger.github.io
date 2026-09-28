@@ -71,14 +71,14 @@
 
         <h1>Shortcuts Setup</h1>
 
-        <p>Download your university shortcuts individually.</p>
+        <p>Package your university shortcuts into one ZIP file.</p>
 
         <button id="download-button" type="button">
-            Download all shortcuts
+            Download shortcuts.zip
         </button>
 
         <p id="status" role="status" aria-live="polite"></p>
-        <p class="hint">The files will use your browser's normal download location. To save them to Desktop, enable “Ask where to save each file” in your browser's download settings.</p>
+        <p class="hint">The ZIP will use your browser's normal download location. Extract it after downloading.</p>
 
     </div>
 
@@ -96,55 +96,105 @@
 
         async function downloadShortcuts() {
             button.disabled = true;
-            status.textContent = "Preparing the downloads...";
+            status.textContent = "Building shortcuts.zip...";
 
             try {
-                // Turn each same-origin file into a blob URL. This removes the
-                // server's suggested filename and lets the download attribute
-                // control the final name and extension.
-                const files = [];
-
-                // Prepare and start each download separately. Some browsers
-                // leave their temporary `.download` file behind when several
-                // downloads are started at exactly the same time.
-                for (const shortcut of shortcuts) {
+                // Fetch the current files and package them on every click.
+                const files = await Promise.all(shortcuts.map(async shortcut => {
                     const response = await fetch(shortcut.path, { cache: "no-store" });
                     if (!response.ok) {
                         throw new Error(`Could not download ${shortcut.name}`);
                     }
 
-                    files.push({
+                    return {
                         name: shortcut.name,
-                        blob: new Blob([await response.arrayBuffer()], { type: "application/octet-stream" })
-                    });
-                }
+                        data: new Uint8Array(await response.arrayBuffer())
+                    };
+                }));
 
-                for (const [index, file] of files.entries()) {
-                    status.textContent = `Starting download ${index + 1} of ${files.length}...`;
-                    const objectUrl = URL.createObjectURL(file.blob);
-                    const link = document.createElement("a");
-                    link.href = objectUrl;
-                    link.download = file.name;
-                    link.hidden = true;
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
+                const zip = createZip(files);
+                const objectUrl = URL.createObjectURL(zip);
+                const link = document.createElement("a");
+                link.href = objectUrl;
+                link.download = "shortcuts.zip";
+                link.hidden = true;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
 
-                    // Keep the object URL alive while the browser starts the download.
-                    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
-
-                    // Give the browser time to finish this download before
-                    // starting the next one.
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                }
-
-                status.textContent = "Downloads started. If prompted, allow multiple downloads for this site.";
+                status.textContent = "shortcuts.zip is downloading.";
             } catch (error) {
-                status.textContent = "The downloads could not be started. Please try again.";
+                status.textContent = "The ZIP could not be created. Please try again.";
                 console.error(error);
             } finally {
                 button.disabled = false;
             }
+        }
+
+        function createZip(files) {
+            const encoder = new TextEncoder();
+            const localFiles = [];
+            const centralDirectory = [];
+            let offset = 0;
+
+            for (const file of files) {
+                const name = encoder.encode(file.name);
+                const checksum = crc32(file.data);
+                const header = new Uint8Array(30 + name.length);
+                const view = new DataView(header.buffer);
+
+                view.setUint32(0, 0x04034b50, true);
+                view.setUint16(4, 20, true);
+                view.setUint16(6, 0x0800, true); // UTF-8 filenames
+                view.setUint16(8, 0, true); // Store without compression
+                view.setUint32(14, checksum, true);
+                view.setUint32(18, file.data.length, true);
+                view.setUint32(22, file.data.length, true);
+                view.setUint16(26, name.length, true);
+                header.set(name, 30);
+                localFiles.push(header, file.data);
+
+                const directoryEntry = new Uint8Array(46 + name.length);
+                const directoryView = new DataView(directoryEntry.buffer);
+                directoryView.setUint32(0, 0x02014b50, true);
+                directoryView.setUint16(4, 20, true);
+                directoryView.setUint16(6, 20, true);
+                directoryView.setUint16(8, 0x0800, true);
+                directoryView.setUint32(16, checksum, true);
+                directoryView.setUint32(20, file.data.length, true);
+                directoryView.setUint32(24, file.data.length, true);
+                directoryView.setUint16(28, name.length, true);
+                directoryView.setUint32(42, offset, true);
+                directoryEntry.set(name, 46);
+                centralDirectory.push(directoryEntry);
+
+                offset += header.length + file.data.length;
+            }
+
+            const centralSize = centralDirectory.reduce((total, part) => total + part.length, 0);
+            const end = new Uint8Array(22);
+            const endView = new DataView(end.buffer);
+            endView.setUint32(0, 0x06054b50, true);
+            endView.setUint16(8, files.length, true);
+            endView.setUint16(10, files.length, true);
+            endView.setUint32(12, centralSize, true);
+            endView.setUint32(16, offset, true);
+
+            return new Blob([...localFiles, ...centralDirectory, end], { type: "application/zip" });
+        }
+
+        function crc32(bytes) {
+            let checksum = 0xffffffff;
+
+            for (const byte of bytes) {
+                checksum ^= byte;
+                for (let bit = 0; bit < 8; bit++) {
+                    checksum = (checksum >>> 1) ^ (checksum & 1 ? 0xedb88320 : 0);
+                }
+            }
+
+            return (checksum ^ 0xffffffff) >>> 0;
         }
     </script>
 
