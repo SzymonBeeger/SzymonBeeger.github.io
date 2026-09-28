@@ -94,25 +94,47 @@
 
         button.addEventListener("click", downloadShortcuts);
 
-        function downloadShortcuts() {
+        async function downloadShortcuts() {
             button.disabled = true;
-            status.textContent = "Starting the downloads...";
+            status.textContent = "Preparing the downloads...";
 
-            // Use the browser's normal download flow. This avoids requesting
-            // access to Desktop/Downloads, which some browsers classify as
-            // protected system folders.
-            for (const shortcut of shortcuts) {
-                const link = document.createElement("a");
-                link.href = shortcut.path;
-                link.download = shortcut.name;
-                link.hidden = true;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
+            try {
+                // Turn each same-origin file into a blob URL. This removes the
+                // server's suggested filename and lets the download attribute
+                // control the final name and extension.
+                const files = await Promise.all(shortcuts.map(async shortcut => {
+                    const response = await fetch(shortcut.path, { cache: "no-store" });
+                    if (!response.ok) {
+                        throw new Error(`Could not download ${shortcut.name}`);
+                    }
+
+                    return {
+                        name: shortcut.name,
+                        blob: new Blob([await response.arrayBuffer()], { type: "application/octet-stream" })
+                    };
+                }));
+
+                for (const file of files) {
+                    const objectUrl = URL.createObjectURL(file.blob);
+                    const link = document.createElement("a");
+                    link.href = objectUrl;
+                    link.download = file.name;
+                    link.hidden = true;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+
+                    // Keep the object URL alive while the browser starts the download.
+                    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+                }
+
+                status.textContent = "Downloads started. If prompted, allow multiple downloads for this site.";
+            } catch (error) {
+                status.textContent = "The downloads could not be started. Please try again.";
+                console.error(error);
+            } finally {
+                button.disabled = false;
             }
-
-            status.textContent = "Downloads started. If prompted, allow multiple downloads for this site.";
-            setTimeout(() => { button.disabled = false; }, 1000);
         }
     </script>
 
